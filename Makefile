@@ -4,7 +4,7 @@ CFLAGS=-std=c99 -Wall -O2
 
 LIBS=-lm -ledit
 
-MAIN = scli
+MAIN = gl
 
 BINDIR=bin
 BINARY=$(BINDIR)/$(MAIN)
