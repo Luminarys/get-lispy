@@ -16,7 +16,7 @@
 #define LASSERT_ARG_NUM(func, args, num) \
         LASSERT(args, args->count == num, \
         "Function '%s', passed incorrect number of arguments. Expected %i, Got %i,", \
-        func, num, args->count)\
+        func, num, args->count)
 
 #define LASSERT_NOT_EMPTY(func, args, index) \
     LASSERT(args, args->cell[index]->count != 0, \
@@ -46,12 +46,19 @@ typedef lval*(*lbuiltin)(lenv*, lval*);
 
 struct lval {
     int type;
-    long num;
 
+    /* Basic */
+    long num;
     char* err;
     char* sym;
-    lbuiltin fun;
 
+    /* Function */
+    lbuiltin builtin;
+    lenv* env;
+    lval* formals;
+    lval* body;
+
+    /* Expression */
     int count;
     struct lval** cell;
 };
@@ -62,6 +69,8 @@ lval* lval_sym(char* m);
 lval* lval_qexpr(void);
 lval* lval_sexpr(void);
 lval* lval_fun(lbuiltin func);
+lval* lval_call(lenv* e, lval* f, lval* a);
+lval* lval_lambda(lval* formals, lval* body);
 
 char* ltype_name(int t);
 

@@ -33,7 +33,12 @@ void lval_print(lval* v) {
             lval_expr_print(v, '(', ')');
             break;
         case LVAL_FUN:
-            printf("<function>");
+            if (v->builtin) {
+                printf("<builtin>");
+            } else {
+                printf("~ ");;
+                lval_print(v->body); putchar(')');
+            }
             break;
     }
 }
