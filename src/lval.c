@@ -32,6 +32,14 @@ lval* lval_err(char* fmt, ...) {
     return v;
 }
 
+lval* lval_str(char* s) {
+    lval* v = malloc(sizeof(lval));
+    v->type = LVAL_STR;
+    v->str = malloc(strlen(s) + 1);
+    strcpy(v->str, s);
+    return v;
+}
+
 lval* lval_sym(char* s) {
     lval* v = malloc(sizeof(lval));
     v->type = LVAL_SYM;
@@ -82,6 +90,7 @@ char* ltype_name(int t) {
         case LVAL_NUM: return "Number";
         case LVAL_ERR: return "Error";
         case LVAL_SYM: return "Symbol";
+        case LVAL_STR: return "String";
         case LVAL_SEXPR: return "S-Expression";
         case LVAL_QEXPR: return "Q-Expression";
         default: return "Unknown";
@@ -101,6 +110,9 @@ void lval_del(lval* v) {
             break;
         case LVAL_ERR:
             free(v->err);
+            break;
+        case LVAL_STR:
+            free(v->str);
             break;
         case LVAL_SYM:
             free(v->sym);
@@ -127,7 +139,7 @@ lval* lval_call(lenv* e, lval* f, lval* a) {
     while (a->count) {
         if (f->formals->count == 0) {
             lval_del(a);
-            return lval_err("Function passed too many arguments. Expected %i, Got %i", total, given);
+            return lval_err("Function passed too many arguments. Expected %i, Got %i.", total, given);
         }
 
         lval* sym = lval_pop(f->formals, 0);
@@ -170,7 +182,7 @@ lval* lval_call(lenv* e, lval* f, lval* a) {
 
         lval* sym = lval_pop(f->formals, 0);
         lval* val = lval_qexpr();
-        
+
         lenv_put(f->env, sym, val);
         lval_del(sym);
         lval_del(val);
@@ -182,6 +194,43 @@ lval* lval_call(lenv* e, lval* f, lval* a) {
     } else {
         return lval_copy(f);
     }
+}
+
+int lval_eq(lval* x, lval* y) {
+    if (x->type != y->type) { return 0; }
+
+    /* Compare Based upon type */
+    switch (x->type) {
+        /* Compare Number Value */
+        case LVAL_NUM: return (x->num == y->num);
+
+        /* Compare String Values */
+        case LVAL_ERR: return (strcmp(x->err, y->err) == 0);
+        case LVAL_SYM: return (strcmp(x->sym, y->sym) == 0);
+        case LVAL_STR: return (strcmp(x->str, y->str) == 0);
+
+        /* If builtin compare, otherwise compare formals and body */
+        case LVAL_FUN:
+            if (x->builtin || y->builtin) {
+              return x->builtin == y->builtin;
+            } else {
+              return lval_eq(x->formals, y->formals)
+                && lval_eq(x->body, y->body);
+            }
+
+        /* If list compare every individual element */
+        case LVAL_QEXPR:
+        case LVAL_SEXPR:
+            if (x->count != y->count) { return 0; }
+            for (int i = 0; i < x->count; i++) {
+              /* If any element not equal then whole list not equal */
+              if (!lval_eq(x->cell[i], y->cell[i])) { return 0; }
+            }
+            /* Otherwise lists must be equal */
+            return 1;
+        break;
+    }
+    return 0;
 }
 
 lval* lval_add(lval* v, lval* x) {
@@ -243,6 +292,10 @@ lval* lval_copy(lval *v) {
         case LVAL_SYM:
             x->sym = malloc(strlen(v->sym) + 1);
             strcpy(x->sym, v->sym);
+            break;
+        case LVAL_STR:
+            x->str = malloc(strlen(v->str) + 1);
+            strcpy(x->str, v->str);
             break;
         case LVAL_SEXPR:
         case LVAL_QEXPR:

@@ -1,4 +1,5 @@
 CC=clang
+
 CFLAGS=-std=c99 -Wall -O2
 
 LIBS=-lm -ledit

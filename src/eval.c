@@ -45,4 +45,3 @@ lval* lval_eval_sexpr(lenv* e, lval* v) {
     lval_del(f);
     return result;
 }
-

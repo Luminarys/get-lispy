@@ -10,12 +10,12 @@
 
 #define LASSERT_TYPE(func, args, index, expect) \
     LASSERT(args, args->cell[index]->type == expect, \
-            "Function '%s' was passed an incorret type for argument %i. Expected %s, Got $s." \
+            "Function '%s' was passed an incorrect type for argument %d. Expected %s, got %s.", \
             func, index, ltype_name(expect), ltype_name(args->cell[index]->type))
 
 #define LASSERT_ARG_NUM(func, args, num) \
         LASSERT(args, args->count == num, \
-        "Function '%s', passed incorrect number of arguments. Expected %i, Got %i,", \
+        "Function '%s', passed incorrect number of arguments. Expected %i, Got %i.", \
         func, num, args->count)
 
 #define LASSERT_NOT_EMPTY(func, args, index) \
@@ -23,12 +23,13 @@
             "Function '%s' passed {} for argument %i.", func, index)
 
 enum {
-    LVAL_NUM,
     LVAL_ERR,
     LVAL_FUN,
+    LVAL_NUM,
     LVAL_SYM,
-    LVAL_QEXPR,
-    LVAL_SEXPR
+    LVAL_SEXPR,
+    LVAL_STR,
+    LVAL_QEXPR
 };
 
 enum {
@@ -51,6 +52,7 @@ struct lval {
     long num;
     char* err;
     char* sym;
+    char* str;
 
     /* Function */
     lbuiltin builtin;
@@ -66,6 +68,7 @@ struct lval {
 lval* lval_num(long x);
 lval* lval_err(char* m, ...);
 lval* lval_sym(char* m);
+lval* lval_str(char* m);
 lval* lval_qexpr(void);
 lval* lval_sexpr(void);
 lval* lval_fun(lbuiltin func);
@@ -73,6 +76,8 @@ lval* lval_call(lenv* e, lval* f, lval* a);
 lval* lval_lambda(lval* formals, lval* body);
 
 char* ltype_name(int t);
+
+int lval_eq(lval* x, lval* y);
 
 void lval_del(lval* v);
 lval* lval_add(lval* v, lval* x);
