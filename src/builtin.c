@@ -20,41 +20,41 @@ void lenv_add_builtin(lenv* e, char* name, lbuiltin func) {
 
 void lenv_add_builtins(lenv *e) {
   /* List Functions */
-  lenv_add_builtin(e, "list", builtin_list);
-  lenv_add_builtin(e, "head", builtin_head);
-  lenv_add_builtin(e, "tail", builtin_tail);
-  lenv_add_builtin(e, "eval", builtin_eval);
-  lenv_add_builtin(e, "join", builtin_join);
+    lenv_add_builtin(e, "list", builtin_list);
+    lenv_add_builtin(e, "head", builtin_head);
+    lenv_add_builtin(e, "tail", builtin_tail);
+    lenv_add_builtin(e, "eval", builtin_eval);
+    lenv_add_builtin(e, "join", builtin_join);
 
-  /* Lambdas */
-  lenv_add_builtin(e, "~",  builtin_lambda);
+    /* Lambdas */
+    lenv_add_builtin(e, "~",  builtin_lambda);
 
-  /* Environment manipulation*/
-  lenv_add_builtin(e, "def",  builtin_def);
-  lenv_add_builtin(e, "=",  builtin_put);
+    /* Environment manipulation*/
+    lenv_add_builtin(e, "def",  builtin_def);
+    lenv_add_builtin(e, "=",  builtin_put);
 
-  /* Comparators and other logical operators */
-  lenv_add_builtin(e, ">",  builtin_greater_than);
-  lenv_add_builtin(e, "<",  builtin_less_than);
-  lenv_add_builtin(e, "==",  builtin_equal_to);
-  lenv_add_builtin(e, "!=",  builtin_not_equal_to);
-  lenv_add_builtin(e, "!",  builtin_not);
-  lenv_add_builtin(e, "&&",  builtin_and);
-  lenv_add_builtin(e, "||",  builtin_or);
-  lenv_add_builtin(e, "if",  builtin_if);
+    /* Comparators and other logical operators */
+    lenv_add_builtin(e, ">",  builtin_greater_than);
+    lenv_add_builtin(e, "<",  builtin_less_than);
+    lenv_add_builtin(e, "==",  builtin_equal_to);
+    lenv_add_builtin(e, "!=",  builtin_not_equal_to);
+    lenv_add_builtin(e, "!",  builtin_not);
+    lenv_add_builtin(e, "&&",  builtin_and);
+    lenv_add_builtin(e, "||",  builtin_or);
+    lenv_add_builtin(e, "if",  builtin_if);
 
-  /* Loading Src */
-  lenv_add_builtin(e, "load",  builtin_load);
+    /* Loading Src */
+    lenv_add_builtin(e, "load",  builtin_load);
 
-  /* Print stuff */
-  lenv_add_builtin(e, "print",  builtin_print);
-  lenv_add_builtin(e, "err",  builtin_print);
+    /* Print stuff */
+    lenv_add_builtin(e, "print",  builtin_print);
+    lenv_add_builtin(e, "err",  builtin_print);
 
-  /* Mathematical Functions */
-  lenv_add_builtin(e, "+", builtin_add);
-  lenv_add_builtin(e, "-", builtin_sub);
-  lenv_add_builtin(e, "*", builtin_mul);
-  lenv_add_builtin(e, "/", builtin_div);
+    /* Mathematical Functions */
+    lenv_add_builtin(e, "+", builtin_add);
+    lenv_add_builtin(e, "-", builtin_sub);
+    lenv_add_builtin(e, "*", builtin_mul);
+    lenv_add_builtin(e, "/", builtin_div);
 }
 
 lval* builtin_op(lenv* e, lval* a, char* op) {
@@ -79,13 +79,13 @@ lval* builtin_op(lenv* e, lval* a, char* op) {
         if (strcmp(op, "*") == 0) { x->num *= y->num; }
         if (strcmp(op, "/") == 0) {
             if (y->num == 0) {
-                lval_del(x); lval_del(y);
+                lval_del(x);
+                lval_del(y);
                 x = lval_err("Division By Zero!");
                 break;
             }
             x->num /= y->num;
         }
-
         lval_del(y);
     }
     lval_del(a);
@@ -98,7 +98,7 @@ lval* builtin_load(lenv* e, lval* a) {
 
     mpc_result_t r;
     if (mpc_parse_contents(a->cell[0]->str, Lispy, &r)) {
-        lval* expr = lval_read(r.output);
+        lval* expr = lval_read(r.output, e);
         mpc_ast_delete(r.output);
 
         while (expr->count) {

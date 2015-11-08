@@ -1,5 +1,5 @@
-#ifndef _SCL_LVAL_H
-#define _SCL_LVAL_H
+#ifndef _GL_LVAL_H
+#define _GL_LVAL_H
 
 #define LASSERT(args, cond, fmt, ...) \
       if (!(cond)) { \
@@ -22,7 +22,7 @@
     LASSERT(args, args->cell[index]->count != 0, \
             "Function '%s' passed {} for argument %i.", func, index)
 
-enum {
+typedef enum {
     LVAL_ERR,
     LVAL_FUN,
     LVAL_NUM,
@@ -30,7 +30,7 @@ enum {
     LVAL_SEXPR,
     LVAL_STR,
     LVAL_QEXPR
-};
+} lval_t;
 
 enum {
     LERR_DIV_ZERO,
@@ -46,7 +46,7 @@ typedef struct lenv lenv;
 typedef lval*(*lbuiltin)(lenv*, lval*);
 
 struct lval {
-    int type;
+    lval_t type;
 
     /* Basic */
     long num;
@@ -75,11 +75,13 @@ lval* lval_fun(lbuiltin func);
 lval* lval_call(lenv* e, lval* f, lval* a);
 lval* lval_lambda(lval* formals, lval* body);
 
-char* ltype_name(int t);
+char* ltype_name(lval_t t);
 
 int lval_eq(lval* x, lval* y);
 
 void lval_del(lval* v);
+void lval_free(lval* v);
+
 lval* lval_add(lval* v, lval* x);
 lval* lval_pop(lval* v, int i);
 lval* lval_take(lval* v, int i);

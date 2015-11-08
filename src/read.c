@@ -1,5 +1,8 @@
-#include "lval.h"
 #include "read.h"
+#include "lval.h"
+#include "lenv.h"
+#include "print.h"
+#include "eval.h"
 #include "mpc.h"
 
 lval* lval_read_num(mpc_ast_t* t) {

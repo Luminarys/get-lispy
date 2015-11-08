@@ -1,5 +1,5 @@
-#ifndef _SCL_LOOP_H
-#define _SCL_LOOP_H
+#ifndef _GL_LOOP_H
+#define _GL_LOOP_H
 
 #include "mpc.h"
 

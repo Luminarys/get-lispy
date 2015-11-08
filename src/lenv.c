@@ -1,11 +1,13 @@
 #include <stdlib.h>
 #include "string.h"
 
-#include "lval.h"
 #include "lenv.h"
+#include "lval.h"
+#include "log.h"
+#include "vm.h"
 
 lenv* lenv_new(void) {
-    lenv* e = malloc(sizeof(lenv));
+    lenv* e = new_lenv();
     e->par = NULL;
     e->count = 0;
     e->syms = NULL;
@@ -15,8 +17,14 @@ lenv* lenv_new(void) {
 
 void lenv_del(lenv* e) {
     for (int i = 0; i < e->count; i++) {
-        free(e->syms[i]);
         lval_del(e->vals[i]);
+    }
+    del_lenv(e);
+}
+
+void lenv_free(lenv* e) {
+    for (int i = 0; i < e->count; i++) {
+        free(e->syms[i]);
     }
     free(e->syms);
     free(e->vals);
@@ -24,7 +32,7 @@ void lenv_del(lenv* e) {
 }
 
 lenv* lenv_copy(lenv* e) {
-    lenv* n = malloc(sizeof(lenv));
+    lenv* n = new_lenv();
     n->par = e->par;
     n->count = e->count;
     n->syms = malloc(sizeof(char*) * n->count);
@@ -38,16 +46,18 @@ lenv* lenv_copy(lenv* e) {
 }
 
 lval* lenv_get(lenv* e, lval* k) {
-    for ( int i = 0; i < e->count; i ++) {
+    for ( int i = 0; i < e->count; i++) {
         if (strcmp(e->syms[i], k->sym) == 0) {
+            lval_del(k);
             return lval_copy(e->vals[i]);
+            //return e->vals[i];
         }
     }
 
     if (e->par) {
         return lenv_get(e->par, k);
     } else {
-        return lval_err("Unbound symbol!");
+        return lval_err("Unbound symbol %s!", k->sym);
     }
 }
 

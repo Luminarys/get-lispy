@@ -1,6 +1,6 @@
 CC=clang
 
-CFLAGS=-std=c99 -Wall -O2
+CFLAGS=-std=c99 -Wall -g
 
 LIBS=-lm -ledit
 
@@ -13,7 +13,7 @@ IDIR=include
 INCLUDES = -I$(IDIR)
 
 SRCDIR = src
-SRCS = read.c eval.c print.c loop.c lval.c builtin.c lenv.c mpc.c
+SRCS = read.c eval.c print.c loop.c lval.c builtin.c lenv.c mpc.c log.c vm.c list.c
 
 OBJDIR = obj
 OBJS = $(SRCS:.c=.o)

@@ -1,5 +1,5 @@
-#ifndef _SCL_BUILTIN_H
-#define _SCL_BUILTIN_H
+#ifndef _GL_BUILTIN_H
+#define _GL_BUILTIN_H
 
 #include "lval.h"
 #include "lenv.h"

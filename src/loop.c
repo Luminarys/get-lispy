@@ -3,8 +3,11 @@
 #include <editline/readline.h>
 
 #include "loop.h"
+#include "log.h"
 #include "mpc.h"
 #include "lval.h"
+#include "list.h"
+#include "vm.h"
 #include "lenv.h"
 #include "builtin.h"
 #include "read.h"
@@ -12,6 +15,9 @@
 #include "print.h"
 
 int main(int argc, char** argv) {
+    init_log(L_DEBUG);
+    gl_log(L_DEBUG, "Log initialized!");
+    init_vm();
     puts("Lispy version 0.1.1");
     puts("Use Ctrl+c to Exit\n");
 
@@ -48,7 +54,7 @@ int main(int argc, char** argv) {
             if (x->type == LVAL_ERR) {
                 lval_println(x);
             } else {
-                printf("Loaded in %s\n", argv[i]);
+                gl_log(L_DEBUG, "Loaded in library %s!", argv[i]);
             }
             lval_del(x);
         }
@@ -62,8 +68,17 @@ int main(int argc, char** argv) {
         mpc_result_t r;
         if(mpc_parse("<stdin>", input, Lispy, &r)) {
             // WE REPL NOW
-            lval* x = lval_eval(e, lval_read(r.output));
+            lval *i = lval_read(r.output);
+            if (i && i->cell[0] && i->cell[0]->type==LVAL_SYM && strcmp(i->cell[0]->sym, "quit") == 0) {
+                lval_del(i);
+                mpc_ast_delete(r.output);
+                free(input);
+                break;
+            }
+            lval* x = lval_eval(e, i);
             lval_println(x);
+
+            lval_del(i);
             lval_del(x);
             mpc_ast_delete(r.output);
         } else {
@@ -74,6 +89,7 @@ int main(int argc, char** argv) {
         free(input);
     }
 
+    stop_vm();
     mpc_cleanup(8, Number, Symbol, String, Comment, Qexpr, Sexpr, Expr, Lispy);
     return 0;
 }

@@ -2,6 +2,7 @@
 #include <string.h>
 
 #include "mpc.h"
+#include "log.h"
 #include "lval.h"
 #include "print.h"
 

@@ -1,5 +1,5 @@
-#ifndef _SCL_LENV_H
-#define _SCL_LENV_H
+#ifndef _GL_LENV_H
+#define _GL_LENV_H
 
 #include "lval.h"
 
@@ -11,7 +11,9 @@ struct lenv {
 };
 
 lenv* lenv_new(void);
+
 void lenv_del(lenv* e);
+void lenv_free(lenv* e);
 
 lval* lenv_get(lenv* e, lval* k);
 void lenv_def(lenv* e, lval* k, lval* v);

@@ -1,4 +1,5 @@
 #include "lval.h"
+#include "log.h"
 #include "lenv.h"
 #include "eval.h"
 #include "builtin.h"
@@ -6,7 +7,6 @@
 lval* lval_eval(lenv* e, lval* v) {
     if (v->type == LVAL_SYM) {
         lval* x = lenv_get(e, v);
-        lval_del(v);
         return x;
     }
     if (v->type == LVAL_SEXPR)
@@ -31,6 +31,7 @@ lval* lval_eval_sexpr(lenv* e, lval* v) {
         return lval_take(v, 0);
 
     lval* f = lval_pop(v, 0);
+
     if (f->type != LVAL_FUN) {
         lval* err = lval_err(
                 "S-expression starts with incorrect type. "
@@ -43,5 +44,6 @@ lval* lval_eval_sexpr(lenv* e, lval* v) {
 
     lval* result = lval_call(e, f, v);
     lval_del(f);
+
     return result;
 }

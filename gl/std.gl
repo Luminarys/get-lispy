@@ -4,6 +4,8 @@
 (def {false} {0})
 
 ; Function definitions
+; (def {fun} (~ {f b} {def (head f) (~ (tail f) b)}))
+
 (def {fun} (~ {f b} {
     def (head f) (~ (tail f) b)
 }))
