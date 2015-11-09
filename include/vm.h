@@ -46,6 +46,7 @@ void sweep();
 void free_all_objects();
 
 lval* new_lval(lval_t t, size_t extra_mem);
+void resize_lval(lval* v, size_t extra_mem);
 void del_lval(lval* v);
 
 lenv* new_lenv();

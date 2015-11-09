@@ -48,7 +48,6 @@ lenv* lenv_copy(lenv* e) {
 lval* lenv_get(lenv* e, lval* k) {
     for ( int i = 0; i < e->count; i++) {
         if (strcmp(e->syms[i], k->sym) == 0) {
-            lval_del(k);
             return lval_copy(e->vals[i]);
             //return e->vals[i];
         }

@@ -6,7 +6,7 @@
 #include "log.h"
 
 size_t mem_in_use = 0;
-size_t mem_quota = 100;
+size_t mem_quota = 200;
 
 const size_t lval_size = sizeof(lval);
 const size_t lenv_size = sizeof(lenv);
@@ -36,7 +36,7 @@ RB_HEAD(objectList, object) objectListHead = RB_INITIALIZER(&objectListHead);
 RB_GENERATE(objectList, object, entry_, object_compare);
 
 lval* new_lval(lval_t t, size_t extra_mem) {
-    gl_log(L_DEBUG, "Allocating a new lval of type: %s with additional memory %zu", ltype_name(t), extra_mem);
+    gl_log(L_DEBUG, "Allocating a new lval(size %zu) of type: %s with additional memory %zu", lval_size, ltype_name(t), extra_mem);
     mem_in_use += lval_size + extra_mem;
     check_mem();
     lval* v = malloc(lval_size);
@@ -45,15 +45,22 @@ lval* new_lval(lval_t t, size_t extra_mem) {
     o->type = OBJECT_LVAL;
     o->v = v;
     o->extra_mem = extra_mem;
+    o->marked = 0;
 
     o->next = vm->firstObject;
     vm->firstObject = o;
     v->o = o;
 
     RB_INSERT(objectList, &objectListHead, o);
-    gl_log(L_DEBUG, "Pointer %p has been inserted into the RB tree", o);
+    //gl_log(L_DEBUG, "Pointer %p has been inserted into the RB tree", o);
 
     return v;
+}
+
+void resize_lval(lval* v, size_t new_extra_mem) {
+    mem_in_use -= v->o->extra_mem;
+    mem_in_use += new_extra_mem;
+    v->o->extra_mem = new_extra_mem;
 }
 
 void del_lval(lval* v) {
@@ -62,20 +69,22 @@ void del_lval(lval* v) {
 }
 
 lenv* new_lenv() {
-    gl_log(L_DEBUG, "Allocating a new lenv");
+    gl_log(L_DEBUG, "Allocating a new lenv, size %zu", lenv_size);
     mem_in_use += lenv_size;
     check_mem();
     lenv* e = malloc(lenv_size);
 
     object* o = malloc(obj_size);
     o->type = OBJECT_LENV;
+    o->extra_mem = 0;
     o->e = e;
+    o->marked = 0;
 
     o->next = vm->firstObject;
     vm->firstObject = o;
     e->o = o;
 
-    gl_log(L_DEBUG, "Pointer %p has been inserted into the RB tree", o);
+    //gl_log(L_DEBUG, "Pointer %p has been inserted into the RB tree", o);
     RB_INSERT(objectList, &objectListHead, o);
 
     return e;
@@ -88,7 +97,7 @@ void del_lenv(lenv* e) {
 
 void check_mem() {
     if (mem_in_use >= mem_quota) {
-        gl_log(L_INFO, "Mem quota exceeded, triggering GC.");
+        gl_log(L_INFO, "Mem quota of %zu exceeded, with mem use %zu. Triggering GC.", mem_quota, mem_in_use);
         mark_all();
         sweep();
         mem_quota = 2*mem_in_use;
@@ -108,16 +117,17 @@ void sweep() {
             *o = unreached->next;
             // Free shit
             if (unreached->type == OBJECT_LVAL) {
-                gl_log(L_DEBUG, "Freeing a lval of type: %s", ltype_name(unreached->v->type));
+                gl_log(L_DEBUG, "Freeing a lval of type %s size %zu, pointer %p", ltype_name(unreached->v->type), unreached->extra_mem + lval_size, unreached);
                 mem_in_use -= (lval_size + unreached->extra_mem);
                 lval_free(unreached->v);
             } else if (unreached->type == OBJECT_LENV) {
-                gl_log(L_DEBUG, "Freeing a lenv");
+                gl_log(L_DEBUG, "Freeing a lenv of size %zu", lenv_size + unreached->extra_mem);
                 mem_in_use -= lenv_size;
                 lenv_free(unreached->e);
             }
             free(unreached);
         } else {
+            //gl_log(L_DEBUG, "Unmarking object %p", *o);
             (*o)->marked = 0;
             o = &(*o)->next;
         }
@@ -126,7 +136,8 @@ void sweep() {
 
 void mark_all() {
     object* o;
-    for (o = RB_MIN(objectList, &objectListHead); o != NULL; o = RB_NEXT(objectList, &objectListHead, o)) {
+    RB_FOREACH(o, objectList, &objectListHead) {
+        //gl_log(L_DEBUG, "Marking object %p", o);
         mark(o);
     }
 }
@@ -138,13 +149,14 @@ void free_all_objects() {
        *o = unreached->next;
        if (unreached->type == OBJECT_LVAL) {
            gl_log(L_DEBUG, "Freeing a lval of type: %s", ltype_name(unreached->v->type));
-           mem_in_use -= lval_size;
+           mem_in_use -= (lval_size + unreached->extra_mem);
            lval_free(unreached->v);
        } else if (unreached->type == OBJECT_LENV) {
            gl_log(L_DEBUG, "Freeing a lenv");
-           mem_in_use -= lenv_size;
+           mem_in_use -= (lenv_size + unreached->extra_mem);
            lenv_free(unreached->e);
        }
+       //RB_REMOVE(objectList, &objectListHead, unreached);
        free(unreached);
     }
 }

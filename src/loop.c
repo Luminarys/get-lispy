@@ -87,6 +87,7 @@ int main(int argc, char** argv) {
         free(input);
     }
 
+    clear_history();
     stop_vm();
     mpc_cleanup(8, Number, Symbol, String, Comment, Qexpr, Sexpr, Expr, Lispy);
     return 0;

@@ -28,7 +28,9 @@ lval* lval_err(char* fmt, ...) {
 
     vsnprintf(v->err, 511, fmt, va);
 
-    v->err = realloc(v->err, strlen(v->err)+1);
+    size_t size = strlen(v->err) + 1;
+    v->err = realloc(v->err, size);
+    resize_lval(v, size);
 
     va_end(va);
 
