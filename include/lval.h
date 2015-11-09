@@ -63,6 +63,9 @@ struct lval {
     /* Expression */
     int count;
     struct lval** cell;
+
+    /* Parent Object */
+    struct object* o;
 };
 
 lval* lval_num(long x);

@@ -98,7 +98,7 @@ lval* builtin_load(lenv* e, lval* a) {
 
     mpc_result_t r;
     if (mpc_parse_contents(a->cell[0]->str, Lispy, &r)) {
-        lval* expr = lval_read(r.output, e);
+        lval* expr = lval_read(r.output);
         mpc_ast_delete(r.output);
 
         while (expr->count) {

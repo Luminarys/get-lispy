@@ -4,7 +4,6 @@
 #include "lval.h"
 #include "lenv.h"
 #include "log.h"
-#include "list.h"
 
 size_t mem_in_use = 0;
 size_t mem_quota = 100;
@@ -18,14 +17,23 @@ VM* vm;
 void init_vm() {
     vm = malloc(sizeof(VM));
     vm->firstObject = NULL;
-    vm->allocated_objects = create_list();
 }
 
 void stop_vm() {
     free_all_objects();
-    list_free(vm->allocated_objects);
     free(vm);
 }
+
+int object_compare(object* a, object* b) {
+    if (a > b) {
+        return 1;
+    }
+
+    return (a == b ? 0 : -1);
+}
+
+RB_HEAD(objectList, object) objectListHead = RB_INITIALIZER(&objectListHead);
+RB_GENERATE(objectList, object, entry_, object_compare);
 
 lval* new_lval(lval_t t, size_t extra_mem) {
     gl_log(L_DEBUG, "Allocating a new lval of type: %s with additional memory %zu", ltype_name(t), extra_mem);
@@ -40,26 +48,21 @@ lval* new_lval(lval_t t, size_t extra_mem) {
 
     o->next = vm->firstObject;
     vm->firstObject = o;
+    v->o = o;
 
-    list_add(vm->allocated_objects, o);
+    RB_INSERT(objectList, &objectListHead, o);
+    gl_log(L_DEBUG, "Pointer %p has been inserted into the RB tree", o);
 
     return v;
 }
 
 void del_lval(lval* v) {
-    gl_log(L_DEBUG, "Deleting a lval of type: %s", ltype_name(v->type));
-
-    object* o = malloc(obj_size);
-    o->type = OBJECT_LVAL;
-    o->v = v;
-
-    int i = find_object(vm->allocated_objects, o);
-    list_del(vm->allocated_objects, i);
-
-    free(o);
+    gl_log(L_DEBUG, "Deleting a lval of type: %s, object pointer %p", ltype_name(v->type), v->o);
+    RB_REMOVE(objectList, &objectListHead, v->o);
 }
 
 lenv* new_lenv() {
+    gl_log(L_DEBUG, "Allocating a new lenv");
     mem_in_use += lenv_size;
     check_mem();
     lenv* e = malloc(lenv_size);
@@ -70,22 +73,17 @@ lenv* new_lenv() {
 
     o->next = vm->firstObject;
     vm->firstObject = o;
+    e->o = o;
 
-    list_add(vm->allocated_objects, o);
+    gl_log(L_DEBUG, "Pointer %p has been inserted into the RB tree", o);
+    RB_INSERT(objectList, &objectListHead, o);
 
     return e;
 }
 
 void del_lenv(lenv* e) {
     gl_log(L_DEBUG, "Deleting a lenv");
-    object* o = malloc(obj_size);
-    o->type = OBJECT_LENV;
-    o->e = e;
-
-    int i = find_object(vm->allocated_objects, o);
-    list_del(vm->allocated_objects, i);
-
-    free(o);
+    RB_REMOVE(objectList, &objectListHead, e->o);
 }
 
 void check_mem() {
@@ -127,9 +125,10 @@ void sweep() {
 }
 
 void mark_all() {
-  	for (int i = 0; i < vm->allocated_objects->length; i++) {
-  	  mark(vm->allocated_objects->items[i]);
-  	}
+    object* o;
+    for (o = RB_MIN(objectList, &objectListHead); o != NULL; o = RB_NEXT(objectList, &objectListHead, o)) {
+        mark(o);
+    }
 }
 
 void free_all_objects() {
@@ -148,25 +147,4 @@ void free_all_objects() {
        }
        free(unreached);
     }
-}
-
-int find_object(list_t *list, object* o) {
-    for (int i = 0; i < list->length; ++i) {
-        if (o->type == OBJECT_LVAL) {
-            if (((object *)list->items[i])->type != o->type) {
-                continue;
-            }
-            if (((object *)list->items[i])->v == o->v) {
-                return i;
-            }
-        } else if (o->type == OBJECT_LENV) {
-            if (((object *)list->items[i])->type != o->type) {
-                continue;
-            }
-            if (((object *)list->items[i])->e == o->e) {
-                return i;
-            }
-        }
-    }
-    return -1;
 }

@@ -3,15 +3,19 @@
 
 #include "lval.h"
 #include "lenv.h"
-#include "list.h"
+#include "tree.h"
 
 typedef enum {
     OBJECT_LVAL,
     OBJECT_LENV
 } object_t;
 
+// For RB tree in GC
+typedef struct objectList objectList;
+typedef struct object object;
+
 // Stack Object
-typedef struct object {
+struct object {
     object_t type;
 
     union {
@@ -20,17 +24,19 @@ typedef struct object {
     };
     size_t extra_mem;
     // For GC
+    RB_ENTRY(object) entry_;
     struct object* next;
     unsigned char marked;
-} object;
+};
 
 typedef struct {
     object* firstObject;
-    list_t* allocated_objects;
 } VM;
 
 void init_vm();
 void stop_vm();
+
+int object_compare(object *a, object *b);
 
 void check_mem();
 void mark_all();
@@ -44,7 +50,5 @@ void del_lval(lval* v);
 
 lenv* new_lenv();
 void del_lenv(lenv* t);
-
-int find_object(list_t *list, object* o);
 
 #endif

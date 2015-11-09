@@ -8,6 +8,7 @@
 #include "log.h"
 #include "lenv.h"
 #include "builtin.h"
+#include "tree.h"
 
 lval* lval_num(long x) {
     lval* v = new_lval(LVAL_NUM, 0);

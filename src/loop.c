@@ -6,7 +6,6 @@
 #include "log.h"
 #include "mpc.h"
 #include "lval.h"
-#include "list.h"
 #include "vm.h"
 #include "lenv.h"
 #include "builtin.h"
@@ -78,7 +77,6 @@ int main(int argc, char** argv) {
             lval* x = lval_eval(e, i);
             lval_println(x);
 
-            lval_del(i);
             lval_del(x);
             mpc_ast_delete(r.output);
         } else {

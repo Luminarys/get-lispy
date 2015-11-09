@@ -8,6 +8,9 @@ struct lenv {
     int count;
     char** syms;
     lval** vals;
+
+    /* Parent Object */
+    struct object* o;
 };
 
 lenv* lenv_new(void);
